@@ -1811,6 +1811,16 @@ class LibvirtDriver(driver.ComputeDriver):
             graphics.listen = FLAGS.vncserver_listen
             guest.add_device(graphics)
 
+        # FIXME(markmcclain): update drivers for BSD compatible versions
+        if image_meta.get('properties', {}).get('os') == 'openbsd':
+            for device in guest.devices:
+                if isinstance(device, config.LibvirtConfigGuestInterface):
+                    device.model = 'e1000'
+                elif isinstance(device, config.LibvirtConfigGuestDisk):
+                    if device.target_bus == 'virtio':
+                        device.target_bus = 'ide'
+                        device.target_dev = 'h' + device.target_dev[1:]
+
         return guest
 
     def to_xml(self, instance, network_info, image_meta=None, rescue=None,
